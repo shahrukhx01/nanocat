@@ -1,0 +1,17 @@
+[project]
+name = "nanocat"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "attr>=0.3.2",
+    "fastapi>=0.115.12",
+    "loguru>=0.7.3",
+    "numpy>=2.2.6",
+    "openai>=1.84.0",
+    "pillow>=11.2.1",
+    "pydantic>=2.11.5",
+    "pyloudnorm>=0.1.1",
+    "soxr>=0.5.0.post1",
+]
