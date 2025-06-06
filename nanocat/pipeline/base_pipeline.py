@@ -7,7 +7,7 @@
 from abc import abstractmethod
 from typing import List
 
-from pipecat.processors.frame_processor import FrameProcessor
+from nanocat.processors.frame_processor import FrameProcessor
 
 
 class BasePipeline(FrameProcessor):

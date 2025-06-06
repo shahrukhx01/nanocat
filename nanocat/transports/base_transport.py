@@ -9,12 +9,12 @@ from typing import List, Mapping, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from pipecat.audio.filters.base_audio_filter import BaseAudioFilter
-from pipecat.audio.mixers.base_audio_mixer import BaseAudioMixer
-from pipecat.audio.turn.base_turn_analyzer import BaseTurnAnalyzer
-from pipecat.audio.vad.vad_analyzer import VADAnalyzer
-from pipecat.processors.frame_processor import FrameProcessor
-from pipecat.utils.base_object import BaseObject
+from nanocat.audio.filters.base_audio_filter import BaseAudioFilter
+from nanocat.audio.mixers.base_audio_mixer import BaseAudioMixer
+from nanocat.audio.turn.base_turn_analyzer import BaseTurnAnalyzer
+from nanocat.audio.vad.vad_analyzer import VADAnalyzer
+from nanocat.processors.frame_processor import FrameProcessor
+from nanocat.utils.base_object import BaseObject
 
 
 class TransportParams(BaseModel):

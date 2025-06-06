@@ -15,7 +15,7 @@ from typing import Awaitable, Callable, Optional
 from loguru import logger
 from pydantic import BaseModel
 
-from nanocat.frames import (
+from nanocat.frames.frames import (
     CancelFrame,
     EndFrame,
     Frame,

@@ -11,7 +11,7 @@ from typing import Awaitable, Callable, Coroutine, Optional
 from loguru import logger
 
 from nanocat.clocks.base_clock import BaseClock
-from nanocat.frames import (
+from nanocat.frames.frames import (
     CancelFrame,
     ErrorFrame,
     Frame,
@@ -20,7 +20,7 @@ from nanocat.frames import (
     StopInterruptionFrame,
     SystemFrame,
 )
-from nanocat.metrics import LLMTokenUsage, MetricsData
+from nanocat.metrics.metrics import LLMTokenUsage, MetricsData
 from nanocat.metrics.frame_processor_metrics import FrameProcessorMetrics
 from nanocat.utils.asyncio import BaseTaskManager
 from nanocat.utils.base_object import BaseObject

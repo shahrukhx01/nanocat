@@ -8,8 +8,8 @@ import time
 
 from loguru import logger
 
-from ..frames import MetricsFrame
-from . import (
+from nanocat.frames.frames import MetricsFrame
+from nanocat.metrics.metrics import (
     LLMTokenUsage,
     LLMUsageMetricsData,
     MetricsData,

@@ -19,9 +19,9 @@ from openai.types.chat import (
 )
 from PIL import Image
 
-from pipecat.adapters.base_llm_adapter import BaseLLMAdapter
-from pipecat.adapters.schemas.tools_schema import ToolsSchema
-from nanocat.frames import AudioRawFrame, Frame
+from nanocat.adapters.base_llm_adapter import BaseLLMAdapter
+from nanocat.adapters.schemas.tools_schema import ToolsSchema
+from nanocat.frames.frames import AudioRawFrame, Frame
 
 # JSON custom encoder to handle bytes arrays so that we can log contexts
 # with images to the console.

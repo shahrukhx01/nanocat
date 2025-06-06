@@ -6,12 +6,17 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "attr>=0.3.2",
+    "azure-cognitiveservices-speech>=1.44.0",
+    "deepgram-sdk>=4.1.1",
     "fastapi>=0.115.12",
     "loguru>=0.7.3",
     "numpy>=2.2.6",
+    "onnxruntime>=1.22.0",
     "openai>=1.84.0",
     "pillow>=11.2.1",
     "pydantic>=2.11.5",
     "pyloudnorm>=0.1.1",
+    "python-dotenv>=1.1.0",
     "soxr>=0.5.0.post1",
+    "uvicorn>=0.34.3",
 ]

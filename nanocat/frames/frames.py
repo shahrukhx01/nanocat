@@ -22,9 +22,9 @@ from typing import (
 from nanocat.audio.vad.vad_analyzer import VADParams
 from nanocat.transcriptions.language import Language
 from nanocat.utils.asyncio import BaseTaskManager
-from nanocat.utils import obj_count, obj_id
+from nanocat.utils.utils import obj_count, obj_id
 from nanocat.clocks.base_clock import BaseClock
-from nanocat.metrics import MetricsData
+from nanocat.metrics.metrics import MetricsData
 
 if TYPE_CHECKING:
     from nanocat.observers.base_observer import BaseObserver

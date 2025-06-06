@@ -6,7 +6,7 @@
 
 from typing import Callable, Coroutine, List
 
-from nanocat.frames import Frame
+from nanocat.frames.frames import Frame
 from nanocat.pipeline.base_pipeline import BasePipeline
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 

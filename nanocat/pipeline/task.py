@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict
 
 from nanocat.clocks.base_clock import BaseClock
 from nanocat.clocks.system_clock import SystemClock
-from nanocat.frames import (
+from nanocat.frames.frames import (
     BotSpeakingFrame,
     CancelFrame,
     CancelTaskFrame,
@@ -28,7 +28,7 @@ from nanocat.frames import (
     StopFrame,
     StopTaskFrame,
 )
-from nanocat.metrics import ProcessingMetricsData, TTFBMetricsData
+from nanocat.metrics.metrics import ProcessingMetricsData, TTFBMetricsData
 from nanocat.observers.base_observer import BaseObserver
 from nanocat.pipeline.base_pipeline import BasePipeline
 from nanocat.pipeline.base_task import BaseTask

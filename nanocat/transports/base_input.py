@@ -10,12 +10,12 @@ from typing import Optional
 
 from loguru import logger
 
-from pipecat.audio.turn.base_turn_analyzer import (
+from nanocat.audio.turn.base_turn_analyzer import (
     BaseTurnAnalyzer,
     EndOfTurnState,
 )
-from pipecat.audio.vad.vad_analyzer import VADAnalyzer, VADState
-from pipecat.frames.frames import (
+from nanocat.audio.vad.vad_analyzer import VADAnalyzer, VADState
+from nanocat.frames.frames import (
     BotInterruptionFrame,
     CancelFrame,
     EmulateUserStartedSpeakingFrame,
@@ -35,9 +35,9 @@ from pipecat.frames.frames import (
     VADUserStartedSpeakingFrame,
     VADUserStoppedSpeakingFrame,
 )
-from pipecat.metrics.metrics import MetricsData
-from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
-from pipecat.transports.base_transport import TransportParams
+from nanocat.metrics.metrics import MetricsData
+from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
+from nanocat.transports.base_transport import TransportParams
 
 
 class BaseInputTransport(FrameProcessor):
@@ -74,7 +74,7 @@ class BaseInputTransport(FrameProcessor):
             with warnings.catch_warnings():
                 warnings.simplefilter("always")
                 warnings.warn(
-                    "Parameter 'vad_audio_passthrough' is deprecated, audio passthrough is now always enabled. Use 'audio_in_passthrough' to disable.",
+                    "Parameter 'vad_audio_passthrough' is deprecated, audio passthrough is now always enabled. Use 'audio_in_passthrough' to disable.",  # noqa: E501
                     DeprecationWarning,
                 )
             self._params.audio_in_passthrough = True

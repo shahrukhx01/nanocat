@@ -23,7 +23,7 @@ from loguru import logger
 
 from nanocat.adapters.base_llm_adapter import BaseLLMAdapter
 from nanocat.adapters.services.open_ai_adapter import OpenAILLMAdapter
-from nanocat.frames import (
+from nanocat.frames.frames import (
     Frame,
     FunctionCallCancelFrame,
     FunctionCallInProgressFrame,
