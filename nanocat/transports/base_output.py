@@ -22,8 +22,6 @@ from nanocat.frames.frames import (
     EndFrame,
     Frame,
     OutputAudioRawFrame,
-    OutputImageRawFrame,
-    SpriteFrame,
     StartFrame,
     StartInterruptionFrame,
     StopInterruptionFrame,
@@ -127,18 +125,10 @@ class BaseOutputTransport(FrameProcessor):
     async def register_audio_destination(self, destination: str):
         pass
 
-    async def write_raw_video_frame(
-        self, frame: OutputImageRawFrame, destination: Optional[str] = None
-    ):
-        pass
-
     async def write_raw_audio_frames(self, frames: bytes, destination: Optional[str] = None):
         pass
 
     async def send_audio(self, frame: OutputAudioRawFrame):
-        await self.queue_frame(frame, FrameDirection.DOWNSTREAM)
-
-    async def send_image(self, frame: OutputImageRawFrame | SpriteFrame):
         await self.queue_frame(frame, FrameDirection.DOWNSTREAM)
 
     #
@@ -176,8 +166,6 @@ class BaseOutputTransport(FrameProcessor):
         # Other frames.
         elif isinstance(frame, OutputAudioRawFrame):
             await self._handle_frame(frame)
-        elif isinstance(frame, (OutputImageRawFrame, SpriteFrame)):
-            await self._handle_frame(frame)
         # TODO(aleix): Images and audio should support presentation timestamps.
         elif frame.pts:
             await self._handle_frame(frame)
@@ -199,8 +187,6 @@ class BaseOutputTransport(FrameProcessor):
             await sender.handle_interruptions(frame)
         elif isinstance(frame, OutputAudioRawFrame):
             await sender.handle_audio_frame(frame)
-        elif isinstance(frame, (OutputImageRawFrame, SpriteFrame)):
-            await sender.handle_image_frame(frame)
         elif frame.pts:
             await sender.handle_timed_frame(frame)
         else:
@@ -317,17 +303,6 @@ class BaseOutputTransport(FrameProcessor):
                 await self._audio_queue.put(chunk)
                 self._audio_buffer = self._audio_buffer[self._audio_chunk_size :]  # noqa: E203
 
-        async def handle_image_frame(self, frame: OutputImageRawFrame | SpriteFrame):
-            if not self._params.video_out_enabled:
-                return
-
-            if self._params.video_out_is_live and isinstance(frame, OutputImageRawFrame):
-                await self._video_queue.put(frame)
-            elif isinstance(frame, OutputImageRawFrame):
-                await self._set_video_image(frame)
-            else:
-                await self._set_video_images(frame.images)
-
         async def handle_timed_frame(self, frame: Frame):
             await self._clock_queue.put((frame.pts, frame.id, frame))
 
@@ -383,11 +358,7 @@ class BaseOutputTransport(FrameProcessor):
                 self._audio_buffer = bytearray()
 
         async def _handle_frame(self, frame: Frame):
-            if isinstance(frame, OutputImageRawFrame):
-                await self._set_video_image(frame)
-            elif isinstance(frame, SpriteFrame):
-                await self._set_video_images(frame.images)
-            elif isinstance(frame, TransportMessageFrame):
+            if isinstance(frame, TransportMessageFrame):
                 await self._transport.send_message(frame)
 
         def _next_frame(self) -> AsyncGenerator[Frame, None]:
@@ -453,12 +424,6 @@ class BaseOutputTransport(FrameProcessor):
                 await self._transport.cancel_task(self._video_task)
                 self._video_task = None
 
-        async def _set_video_image(self, image: OutputImageRawFrame):
-            self._video_images = itertools.cycle([image])
-
-        async def _set_video_images(self, images: List[OutputImageRawFrame]):
-            self._video_images = itertools.cycle(images)
-
         async def _video_task_handler(self):
             self._video_start_time = None
             self._video_frame_index = 0
@@ -498,22 +463,6 @@ class BaseOutputTransport(FrameProcessor):
             await self._draw_image(image)
 
             self._video_queue.task_done()
-
-        async def _draw_image(self, frame: OutputImageRawFrame):
-            desired_size = (self._params.video_out_width, self._params.video_out_height)
-
-            # TODO: we should refactor in the future to support dynamic resolutions
-            # which is kind of what happens in P2P connections.
-            # We need to add support for that inside the DailyTransport
-            if frame.size != desired_size:
-                image = Image.frombytes(frame.format, frame.size, frame.image)
-                resized_image = image.resize(desired_size)
-                # logger.warning(f"{frame} does not have the expected size {desired_size}, resizing")
-                frame = OutputImageRawFrame(
-                    resized_image.tobytes(), resized_image.size, resized_image.format
-                )
-
-            await self._transport.write_raw_video_frame(frame, self._destination)
 
         #
         # Clock handling

@@ -12,7 +12,6 @@ from nanocat.frames.frames import (
     FunctionCallCancelFrame,
     FunctionCallInProgressFrame,
     FunctionCallResultFrame,
-    UserImageRawFrame,
 )
 from nanocat.processors.aggregators.llm_response import (
     LLMAssistantAggregatorParams,
@@ -128,13 +127,4 @@ class OpenAIAssistantContextAggregator(LLMAssistantContextAggregator):
             ):
                 message["content"] = result
 
-    async def handle_user_image_frame(self, frame: UserImageRawFrame):
-        await self._update_function_call_result(
-            frame.request.function_name, frame.request.tool_call_id, "COMPLETED"
-        )
-        self._context.add_image_frame_message(
-            format=frame.format,
-            size=frame.size,
-            image=frame.image,
-            text=frame.request.context,
-        )
+
