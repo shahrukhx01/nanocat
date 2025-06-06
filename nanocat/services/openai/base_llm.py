@@ -263,7 +263,7 @@ class BaseOpenAILLMService(LLMService):
                     )
                 else:
                     raise OpenAIUnhandledFunctionException(
-                        f"The LLM tried to call a function named '{function_name}', but there isn't a callback registered for that function."
+                        f"The LLM tried to call a function named '{function_name}', but there isn't a callback registered for that function."  # noqa: E501
                     )
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
