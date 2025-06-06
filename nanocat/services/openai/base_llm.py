@@ -26,7 +26,6 @@ from nanocat.frames.frames import (
     LLMMessagesFrame,
     LLMTextFrame,
     LLMUpdateSettingsFrame,
-    VisionImageRawFrame,
 )
 from nanocat.metrics.metrics import LLMTokenUsage
 from nanocat.processors.aggregators.openai_llm_context import (
@@ -274,11 +273,6 @@ class BaseOpenAILLMService(LLMService):
             context: OpenAILLMContext = frame.context
         elif isinstance(frame, LLMMessagesFrame):
             context = OpenAILLMContext.from_messages(frame.messages)
-        elif isinstance(frame, VisionImageRawFrame):
-            context = OpenAILLMContext()
-            context.add_image_frame_message(
-                format=frame.format, size=frame.size, image=frame.image, text=frame.text
-            )
         elif isinstance(frame, LLMUpdateSettingsFrame):
             await self._update_settings(frame.settings)
         else:

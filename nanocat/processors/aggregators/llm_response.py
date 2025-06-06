@@ -36,7 +36,6 @@ from nanocat.frames.frames import (
     StartInterruptionFrame,
     TextFrame,
     TranscriptionFrame,
-    UserImageRawFrame,
     UserStartedSpeakingFrame,
     UserStoppedSpeakingFrame,
 )
@@ -480,9 +479,6 @@ class LLMAssistantContextAggregator(LLMContextResponseAggregator):
     async def handle_function_call_cancel(self, frame: FunctionCallCancelFrame):
         pass
 
-    async def handle_user_image_frame(self, frame: UserImageRawFrame):
-        pass
-
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
 
@@ -509,8 +505,6 @@ class LLMAssistantContextAggregator(LLMContextResponseAggregator):
             await self._handle_function_call_result(frame)
         elif isinstance(frame, FunctionCallCancelFrame):
             await self._handle_function_call_cancel(frame)
-        elif isinstance(frame, UserImageRawFrame) and frame.request and frame.request.tool_call_id:
-            await self._handle_user_image_frame(frame)
         elif isinstance(frame, BotStoppedSpeakingFrame):
             await self.push_aggregation()
             await self.push_frame(frame, direction)
@@ -596,20 +590,8 @@ class LLMAssistantContextAggregator(LLMContextResponseAggregator):
             await self.handle_function_call_cancel(frame)
             del self._function_calls_in_progress[frame.tool_call_id]
 
-    async def _handle_user_image_frame(self, frame: UserImageRawFrame):
-        logger.debug(
-            f"{self} UserImageRawFrame: [{frame.request.function_name}:{frame.request.tool_call_id}]"
-        )
+        del self._function_calls_in_progress[frame.tool_call_id]
 
-        if frame.request.tool_call_id not in self._function_calls_in_progress:
-            logger.warning(
-                f"UserImageRawFrame tool_call_id [{frame.request.tool_call_id}] is not running"
-            )
-            return
-
-        del self._function_calls_in_progress[frame.request.tool_call_id]
-
-        await self.handle_user_image_frame(frame)
         await self.push_aggregation()
         await self.push_context_frame(FrameDirection.UPSTREAM)
 
