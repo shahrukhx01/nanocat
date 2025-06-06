@@ -5,13 +5,11 @@
 #
 
 import asyncio
-import itertools
 import sys
 import time
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from loguru import logger
-from PIL import Image
 
 from nanocat.audio.utils import create_default_resampler
 from nanocat.frames.frames import (
