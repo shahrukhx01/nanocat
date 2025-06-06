@@ -6,7 +6,7 @@
 
 import asyncio
 import time
-from typing import Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple, Type
+from typing import Any, AsyncIterable, Dict, Iterable, Optional, Tuple, Type
 
 from loguru import logger
 from pydantic import BaseModel, ConfigDict
@@ -29,10 +29,8 @@ from nanocat.frames.frames import (
     StopTaskFrame,
 )
 from nanocat.metrics.metrics import ProcessingMetricsData, TTFBMetricsData
-from nanocat.observers.base_observer import BaseObserver
 from nanocat.pipeline.base_pipeline import BasePipeline
 from nanocat.pipeline.base_task import BaseTask
-from nanocat.pipeline.task_observer import TaskObserver
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 from nanocat.utils.asyncio import BaseTaskManager, TaskManager
 
@@ -51,7 +49,6 @@ class PipelineParams(BaseModel):
         enable_metrics: Whether to enable metrics collection.
         enable_usage_metrics: Whether to enable usage metrics.
         heartbeats_period_secs: Period between heartbeats in seconds.
-        observers: List of observers for monitoring pipeline execution.
         report_only_initial_ttfb: Whether to report only initial time to first byte.
         send_initial_empty_metrics: Whether to send initial empty metrics.
         start_metadata: Additional metadata for pipeline start.
@@ -66,7 +63,6 @@ class PipelineParams(BaseModel):
     enable_metrics: bool = False
     enable_usage_metrics: bool = False
     heartbeats_period_secs: float = HEARTBEAT_SECONDS
-    observers: List[BaseObserver] = []
     report_only_initial_ttfb: bool = False
     send_initial_empty_metrics: bool = True
     start_metadata: Dict[str, Any] = {}
@@ -147,7 +143,6 @@ class PipelineTask(BaseTask):
     Args:
         pipeline: The pipeline to execute.
         params: Configuration parameters for the pipeline.
-        observers: List of observers for monitoring pipeline execution.
         clock: Clock implementation for timing operations.
         check_dangling_tasks: Whether to check for processors' tasks finishing properly.
         idle_timeout_secs: Timeout (in seconds) to consider pipeline idle or
@@ -165,7 +160,6 @@ class PipelineTask(BaseTask):
         pipeline: BasePipeline,
         *,
         params: PipelineParams = PipelineParams(),
-        observers: List[BaseObserver] = [],
         clock: BaseClock = SystemClock(),
         task_manager: Optional[BaseTaskManager] = None,
         check_dangling_tasks: bool = True,
@@ -184,16 +178,6 @@ class PipelineTask(BaseTask):
         self._idle_timeout_secs = idle_timeout_secs
         self._idle_timeout_frames = idle_timeout_frames
         self._cancel_on_idle_timeout = cancel_on_idle_timeout
-        if self._params.observers:
-            import warnings
-
-            with warnings.catch_warnings():
-                warnings.simplefilter("always")
-                warnings.warn(
-                    "Field 'observers' is deprecated, use the 'observers' parameter instead.",
-                    DeprecationWarning,
-                )
-            observers = self._params.observers
         self._finished = False
 
         # This queue receives frames coming from the pipeline upstream.
@@ -228,13 +212,6 @@ class PipelineTask(BaseTask):
         # This task maneger will handle all the asyncio tasks created by this
         # PipelineTask and its frame processors.
         self._task_manager = task_manager or TaskManager()
-
-        # The task observer acts as a proxy to the provided observers. This way,
-        # we only need to pass a single observer (using the StartFrame) which
-        # then just acts as a proxy.
-        self._observer = TaskObserver(
-            observers=observers, task_manager=self._task_manager
-        )
 
         # These events can be used to check which frames make it to the source
         # or sink processors. Instead of calling the event handlers for every
@@ -349,8 +326,6 @@ class PipelineTask(BaseTask):
             self._process_push_queue(), f"{self}::_process_push_queue"
         )
 
-        await self._observer.start()
-
         return self._process_push_task
 
     def _maybe_start_heartbeat_tasks(self):
@@ -369,7 +344,6 @@ class PipelineTask(BaseTask):
             )
 
     async def _cancel_tasks(self):
-        await self._observer.stop()
 
         await self._task_manager.cancel_task(self._process_up_task)
         await self._task_manager.cancel_task(self._process_down_task)
@@ -427,7 +401,6 @@ class PipelineTask(BaseTask):
             audio_out_sample_rate=self._params.audio_out_sample_rate,
             enable_metrics=self._params.enable_metrics,
             enable_usage_metrics=self._params.enable_usage_metrics,
-            observer=self._observer,
             report_only_initial_ttfb=self._params.report_only_initial_ttfb,
         )
         start_frame.metadata = self._params.start_metadata

@@ -7,7 +7,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
-    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -25,9 +24,6 @@ from nanocat.utils.asyncio import BaseTaskManager
 from nanocat.utils.utils import obj_count, obj_id
 from nanocat.clocks.base_clock import BaseClock
 from nanocat.metrics.metrics import MetricsData
-
-if TYPE_CHECKING:
-    from nanocat.observers.base_observer import BaseObserver
 
 
 def nanoseconds_to_seconds(nanoseconds: int) -> float:
@@ -466,7 +462,6 @@ class StartFrame(SystemFrame):
     allow_interruptions: bool = False
     enable_metrics: bool = False
     enable_usage_metrics: bool = False
-    observer: Optional["BaseObserver"] = None
     report_only_initial_ttfb: bool = False
 
 
