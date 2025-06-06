@@ -21,7 +21,6 @@ from nanocat.frames.frames import (
     EmulateUserStartedSpeakingFrame,
     EmulateUserStoppedSpeakingFrame,
     EndFrame,
-    FilterUpdateSettingsFrame,
     Frame,
     InputAudioRawFrame,
     MetricsFrame,
@@ -126,9 +125,6 @@ class BaseInputTransport(FrameProcessor):
         if self._params.turn_analyzer:
             self._params.turn_analyzer.set_sample_rate(self._sample_rate)
 
-        # Start audio filter.
-        if self._params.audio_in_filter:
-            await self._params.audio_in_filter.start(self._sample_rate)
         # Create audio input queue and task if needed.
         if not self._audio_task and self._params.audio_in_enabled:
             self._audio_in_queue = asyncio.Queue()
@@ -139,9 +135,6 @@ class BaseInputTransport(FrameProcessor):
         if self._audio_task and self._params.audio_in_enabled:
             await self.cancel_task(self._audio_task)
             self._audio_task = None
-        # Stop audio filter.
-        if self._params.audio_in_filter:
-            await self._params.audio_in_filter.stop()
 
     async def cancel(self, frame: CancelFrame):
         # Cancel and wait for the audio input task to finish.
@@ -189,8 +182,6 @@ class BaseInputTransport(FrameProcessor):
         elif isinstance(frame, VADParamsUpdateFrame):
             if self.vad_analyzer:
                 self.vad_analyzer.set_params(frame.params)
-        elif isinstance(frame, FilterUpdateSettingsFrame) and self._params.audio_in_filter:
-            await self._params.audio_in_filter.process_frame(frame)
         # Other frames
         else:
             await self.push_frame(frame, direction)
@@ -291,10 +282,6 @@ class BaseInputTransport(FrameProcessor):
         vad_state: VADState = VADState.QUIET
         while True:
             frame: InputAudioRawFrame = await self._audio_in_queue.get()
-
-            # If an audio filter is available, run it before VAD.
-            if self._params.audio_in_filter:
-                frame.audio = await self._params.audio_in_filter.filter(frame.audio)
 
             # Check VAD and push event if necessary. We just care about
             # changes from QUIET to SPEAKING and vice versa.

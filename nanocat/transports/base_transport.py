@@ -5,12 +5,10 @@
 #
 
 from abc import abstractmethod
-from typing import List, Mapping, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from nanocat.audio.filters.base_audio_filter import BaseAudioFilter
-from nanocat.audio.mixers.base_audio_mixer import BaseAudioMixer
 from nanocat.audio.turn.base_turn_analyzer import BaseTurnAnalyzer
 from nanocat.audio.vad.vad_analyzer import VADAnalyzer
 from nanocat.processors.frame_processor import FrameProcessor
@@ -33,12 +31,10 @@ class TransportParams(BaseModel):
     audio_out_channels: int = 1
     audio_out_bitrate: int = 96000
     audio_out_10ms_chunks: int = 4
-    audio_out_mixer: Optional[BaseAudioMixer | Mapping[Optional[str], BaseAudioMixer]] = None
     audio_out_destinations: List[str] = []
     audio_in_enabled: bool = False
     audio_in_sample_rate: Optional[int] = None
     audio_in_channels: int = 1
-    audio_in_filter: Optional[BaseAudioFilter] = None
     audio_in_stream_on_start: bool = True
     audio_in_passthrough: bool = True
     video_in_enabled: bool = False

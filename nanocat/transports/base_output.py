@@ -8,12 +8,11 @@ import asyncio
 import itertools
 import sys
 import time
-from typing import Any, AsyncGenerator, Dict, List, Mapping, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from loguru import logger
 from PIL import Image
 
-from nanocat.audio.mixers.base_audio_mixer import BaseAudioMixer
 from nanocat.audio.utils import create_default_resampler
 from nanocat.frames.frames import (
     BotSpeakingFrame,
@@ -22,7 +21,6 @@ from nanocat.frames.frames import (
     CancelFrame,
     EndFrame,
     Frame,
-    MixerControlFrame,
     OutputAudioRawFrame,
     OutputImageRawFrame,
     SpriteFrame,
@@ -175,8 +173,6 @@ class BaseOutputTransport(FrameProcessor):
             await self.stop(frame)
             # Keep pushing EndFrame down so all the pipeline stops nicely.
             await self.push_frame(frame, direction)
-        elif isinstance(frame, MixerControlFrame):
-            await self._handle_frame(frame)
         # Other frames.
         elif isinstance(frame, OutputAudioRawFrame):
             await self._handle_frame(frame)
@@ -205,8 +201,6 @@ class BaseOutputTransport(FrameProcessor):
             await sender.handle_audio_frame(frame)
         elif isinstance(frame, (OutputImageRawFrame, SpriteFrame)):
             await sender.handle_image_frame(frame)
-        elif isinstance(frame, MixerControlFrame):
-            await sender.handle_mixer_control_frame(frame)
         elif frame.pts:
             await sender.handle_timed_frame(frame)
         else:
@@ -238,10 +232,6 @@ class BaseOutputTransport(FrameProcessor):
             # This will be used to resample incoming audio to the output sample rate.
             self._resampler = create_default_resampler()
 
-            # The user can provide a single mixer, to be used by the default
-            # destination, or a destination/mixer mapping.
-            self._mixer: Optional[BaseAudioMixer] = None
-
             # These are the images that we should send at our desired framerate.
             self._video_images = None
 
@@ -268,18 +258,6 @@ class BaseOutputTransport(FrameProcessor):
             self._create_clock_task()
             self._create_audio_task()
 
-            # Check if we have an audio mixer for our destination.
-            if self._params.audio_out_mixer:
-                if isinstance(self._params.audio_out_mixer, Mapping):
-                    self._mixer = self._params.audio_out_mixer.get(self._destination, None)
-                elif not self._destination:
-                    # Only use the default mixer if we are the default destination.
-                    self._mixer = self._params.audio_out_mixer
-
-            # Start audio mixer.
-            if self._mixer:
-                await self._mixer.start(self._sample_rate)
-
         async def stop(self, frame: EndFrame):
             # Let the sink tasks process the queue until they reach this EndFrame.
             await self._clock_queue.put((sys.maxsize, frame.id, frame))
@@ -293,10 +271,6 @@ class BaseOutputTransport(FrameProcessor):
                 await self._transport.wait_for_task(self._audio_task)
             if self._clock_task:
                 await self._transport.wait_for_task(self._clock_task)
-
-            # Stop audio mixer.
-            if self._mixer:
-                await self._mixer.stop()
 
             # We can now cancel the video task.
             await self._cancel_video_task()
@@ -359,10 +333,6 @@ class BaseOutputTransport(FrameProcessor):
 
         async def handle_sync_frame(self, frame: Frame):
             await self._audio_queue.put(frame)
-
-        async def handle_mixer_control_frame(self, frame: MixerControlFrame):
-            if self._mixer:
-                await self._mixer.process_frame(frame)
 
         #
         # Audio handling
@@ -432,33 +402,7 @@ class BaseOutputTransport(FrameProcessor):
                         # Notify the bot stopped speaking upstream if necessary.
                         await self._bot_stopped_speaking()
 
-            async def with_mixer(vad_stop_secs: float) -> AsyncGenerator[Frame, None]:
-                last_frame_time = 0
-                silence = b"\x00" * self._audio_chunk_size
-                while True:
-                    try:
-                        frame = self._audio_queue.get_nowait()
-                        if isinstance(frame, OutputAudioRawFrame):
-                            frame.audio = await self._mixer.mix(frame.audio)
-                        last_frame_time = time.time()
-                        yield frame
-                    except asyncio.QueueEmpty:
-                        # Notify the bot stopped speaking upstream if necessary.
-                        diff_time = time.time() - last_frame_time
-                        if diff_time > vad_stop_secs:
-                            await self._bot_stopped_speaking()
-                        # Generate an audio frame with only the mixer's part.
-                        frame = OutputAudioRawFrame(
-                            audio=await self._mixer.mix(silence),
-                            sample_rate=self._sample_rate,
-                            num_channels=self._params.audio_out_channels,
-                        )
-                        yield frame
-
-            if self._mixer:
-                return with_mixer(BOT_VAD_STOP_SECS)
-            else:
-                return without_mixer(BOT_VAD_STOP_SECS)
+            return without_mixer(BOT_VAD_STOP_SECS)
 
         async def _audio_task_handler(self):
             # Push a BotSpeakingFrame every 200ms, we don't really need to push it
