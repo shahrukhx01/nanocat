@@ -8,14 +8,14 @@ from typing import Any, AsyncGenerator, Dict, Mapping
 
 from loguru import logger
 
-from nanocat.frames import (
+from nanocat.frames.frames import (
     CancelFrame,
     EndFrame,
     ErrorFrame,
     Frame,
     StartFrame,
 )
-from nanocat.metrics import MetricsData
+from nanocat.metrics.metrics import MetricsData
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 
 

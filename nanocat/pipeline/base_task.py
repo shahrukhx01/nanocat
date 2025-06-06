@@ -8,7 +8,7 @@ import asyncio
 from abc import abstractmethod
 from typing import AsyncIterable, Iterable
 
-from nanocat.frames import Frame
+from nanocat.frames.frames import Frame
 from nanocat.utils.base_object import BaseObject
 
 

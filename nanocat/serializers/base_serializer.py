@@ -7,7 +7,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from pipecat.frames.frames import Frame, StartFrame
+from nanocat.frames.frames import Frame, StartFrame
 
 
 class FrameSerializerType(Enum):

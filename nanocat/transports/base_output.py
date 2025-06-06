@@ -13,9 +13,9 @@ from typing import Any, AsyncGenerator, Dict, List, Mapping, Optional
 from loguru import logger
 from PIL import Image
 
-from pipecat.audio.mixers.base_audio_mixer import BaseAudioMixer
-from pipecat.audio.utils import create_default_resampler
-from pipecat.frames.frames import (
+from nanocat.audio.mixers.base_audio_mixer import BaseAudioMixer
+from nanocat.audio.utils import create_default_resampler
+from nanocat.frames.frames import (
     BotSpeakingFrame,
     BotStartedSpeakingFrame,
     BotStoppedSpeakingFrame,
@@ -34,9 +34,9 @@ from pipecat.frames.frames import (
     TransportMessageUrgentFrame,
     TTSAudioRawFrame,
 )
-from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
-from pipecat.transports.base_transport import TransportParams
-from pipecat.utils.time import nanoseconds_to_seconds
+from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
+from nanocat.transports.base_transport import TransportParams
+from nanocat.utils.time.time_utils import nanoseconds_to_seconds
 
 BOT_VAD_STOP_SECS = 0.35
 
@@ -341,7 +341,7 @@ class BaseOutputTransport(FrameProcessor):
                     num_channels=frame.num_channels,
                 )
                 await self._audio_queue.put(chunk)
-                self._audio_buffer = self._audio_buffer[self._audio_chunk_size :]
+                self._audio_buffer = self._audio_buffer[self._audio_chunk_size :]  # noqa: E203
 
         async def handle_image_frame(self, frame: OutputImageRawFrame | SpriteFrame):
             if not self._params.video_out_enabled:

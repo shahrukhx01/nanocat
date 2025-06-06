@@ -9,7 +9,7 @@ from typing import List
 
 from attr import dataclass
 
-from nanocat.frames import Frame
+from nanocat.frames.frames import Frame
 from nanocat.observers.base_observer import BaseObserver
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 from nanocat.utils.asyncio import BaseTaskManager

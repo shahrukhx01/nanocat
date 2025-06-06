@@ -11,7 +11,7 @@ from typing import Optional
 
 from loguru import logger
 
-from nanocat.utils import obj_count, obj_id
+from nanocat.utils.utils import obj_count, obj_id
 
 
 class BaseObject(ABC):

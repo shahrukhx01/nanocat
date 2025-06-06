@@ -6,7 +6,7 @@
 
 from abc import ABC, abstractmethod
 
-from nanocat.frames import Frame
+from nanocat.frames.frames import Frame
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 
 

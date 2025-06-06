@@ -11,7 +11,7 @@ from typing import Dict, List, Literal, Set
 
 from loguru import logger
 
-from nanocat.frames import (
+from nanocat.frames.frames import (
     BotStartedSpeakingFrame,
     BotStoppedSpeakingFrame,
     CancelFrame,
@@ -45,7 +45,7 @@ from nanocat.processors.aggregators.openai_llm_context import (
     OpenAILLMContextFrame,
 )
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
-from nanocat.utils.time_utils import time_now_iso8601
+from nanocat.utils.time.time_utils import time_now_iso8601
 
 
 @dataclass

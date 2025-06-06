@@ -10,7 +10,7 @@ import json
 from loguru import logger
 
 import nanocat.frames.protobufs.frames_pb2 as frame_protos
-from nanocat.frames import (
+from nanocat.frames.frames import (
     Frame,
     InputAudioRawFrame,
     OutputAudioRawFrame,
