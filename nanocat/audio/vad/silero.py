@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD 2-Clause License
 #
 
+import os
 import time
 from typing import Optional
 
@@ -116,25 +117,7 @@ class SileroVADAnalyzer(VADAnalyzer):
         super().__init__(sample_rate=sample_rate, params=params)
 
         logger.debug("Loading Silero VAD model...")
-
-        model_name = "silero_vad.onnx"
-        package_path = "pipecat.audio.vad.data"
-
-        try:
-            import importlib_resources as impresources
-
-            model_file_path = str(impresources.files(package_path).joinpath(model_name))
-        except BaseException:
-            from importlib import resources as impresources
-
-            try:
-                with impresources.path(package_path, model_name) as f:
-                    model_file_path = f
-            except BaseException:
-                model_file_path = str(
-                    impresources.files(package_path).joinpath(model_name)
-                )
-
+        model_file_path = os.getenv("SILERO_VAD_FILE_PATH")
         self._model = SileroOnnxModel(model_file_path, force_onnx_cpu=True)
 
         self._last_reset_time = 0

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket
 from loguru import logger
 from nanocat.frames.frames import TTSSpeakFrame
+from nanocat.pipeline.runner import PipelineRunner
 from nanocat.transports.base_transport import BaseTransport
 from nanocat.transports.network.fastapi_websocket import (
     FastAPIWebsocketTransport,
@@ -95,4 +96,4 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     async def on_client_connected(transport: BaseTransport, client: Any) -> None:
         await task.queue_frames([TTSSpeakFrame(first_message)])
 
-    await task.run()
+    await PipelineRunner().run(task=task)
