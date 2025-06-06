@@ -78,7 +78,9 @@ class OpenAIUserContextAggregator(LLMUserContextAggregator):
 
 
 class OpenAIAssistantContextAggregator(LLMAssistantContextAggregator):
-    async def handle_function_call_in_progress(self, frame: FunctionCallInProgressFrame):
+    async def handle_function_call_in_progress(
+        self, frame: FunctionCallInProgressFrame
+    ):
         self._context.add_message(
             {
                 "role": "assistant",
@@ -105,7 +107,9 @@ class OpenAIAssistantContextAggregator(LLMAssistantContextAggregator):
     async def handle_function_call_result(self, frame: FunctionCallResultFrame):
         if frame.result:
             result = json.dumps(frame.result)
-            await self._update_function_call_result(frame.function_name, frame.tool_call_id, result)
+            await self._update_function_call_result(
+                frame.function_name, frame.tool_call_id, result
+            )
         else:
             await self._update_function_call_result(
                 frame.function_name, frame.tool_call_id, "COMPLETED"
@@ -126,5 +130,3 @@ class OpenAIAssistantContextAggregator(LLMAssistantContextAggregator):
                 and message["tool_call_id"] == tool_call_id
             ):
                 message["content"] = result
-
-
