@@ -19,8 +19,6 @@ from openai.types.chat import (
 )
 from PIL import Image
 
-from nanocat.adapters.base_llm_adapter import BaseLLMAdapter
-from nanocat.adapters.schemas.tools_schema import ToolsSchema
 from nanocat.frames.frames import AudioRawFrame, Frame
 
 # JSON custom encoder to handle bytes arrays so that we can log contexts
@@ -39,19 +37,12 @@ class OpenAILLMContext:
     def __init__(
         self,
         messages: Optional[List[ChatCompletionMessageParam]] = None,
-        tools: List[ChatCompletionToolParam] | NotGiven | ToolsSchema = NOT_GIVEN,
+        tools: List[ChatCompletionToolParam] | NotGiven = NOT_GIVEN,
         tool_choice: ChatCompletionToolChoiceOptionParam | NotGiven = NOT_GIVEN,
     ):
         self._messages: List[ChatCompletionMessageParam] = messages if messages else []
         self._tool_choice: ChatCompletionToolChoiceOptionParam | NotGiven = tool_choice
-        self._tools: List[ChatCompletionToolParam] | NotGiven | ToolsSchema = tools
-        self._llm_adapter: Optional[BaseLLMAdapter] = None
-
-    def get_llm_adapter(self) -> Optional[BaseLLMAdapter]:
-        return self._llm_adapter
-
-    def set_llm_adapter(self, llm_adapter: BaseLLMAdapter):
-        self._llm_adapter = llm_adapter
+        self._tools: List[ChatCompletionToolParam] | NotGiven = tools
 
     @staticmethod
     def from_messages(messages: List[dict]) -> "OpenAILLMContext":
@@ -69,8 +60,6 @@ class OpenAILLMContext:
 
     @property
     def tools(self) -> List[ChatCompletionToolParam] | NotGiven | List[Any]:
-        if self._llm_adapter:
-            return self._llm_adapter.from_standard_tools(self._tools)
         return self._tools
 
     @property
@@ -90,7 +79,9 @@ class OpenAILLMContext:
         return self._messages
 
     def get_messages_json(self) -> str:
-        return json.dumps(self._messages, cls=CustomEncoder, ensure_ascii=False, indent=2)
+        return json.dumps(
+            self._messages, cls=CustomEncoder, ensure_ascii=False, indent=2
+        )
 
     def get_messages_for_logging(self) -> str:
         msgs = []
@@ -152,10 +143,14 @@ class OpenAILLMContext:
             messages.extend(standard_messages)
         return messages
 
-    def set_tool_choice(self, tool_choice: ChatCompletionToolChoiceOptionParam | NotGiven):
+    def set_tool_choice(
+        self, tool_choice: ChatCompletionToolChoiceOptionParam | NotGiven
+    ):
         self._tool_choice = tool_choice
 
-    def set_tools(self, tools: List[ChatCompletionToolParam] | NotGiven | ToolsSchema = NOT_GIVEN):
+    def set_tools(
+        self, tools: List[ChatCompletionToolParam] | NotGiven = NOT_GIVEN
+    ):
         if tools != NOT_GIVEN and isinstance(tools, list) and len(tools) == 0:
             tools = NOT_GIVEN
         self._tools = tools
@@ -171,11 +166,16 @@ class OpenAILLMContext:
         if text:
             content.append({"type": "text", "text": text})
         content.append(
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}},
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"},
+            },
         )
         self.add_message({"role": "user", "content": content})
 
-    def add_audio_frames_message(self, *, audio_frames: list[AudioRawFrame], text: str = None):
+    def add_audio_frames_message(
+        self, *, audio_frames: list[AudioRawFrame], text: str = None
+    ):
         # todo: implement for OpenAI models and others
         pass
 
@@ -183,7 +183,9 @@ class OpenAILLMContext:
         # RIFF chunk descriptor
         header = bytearray()
         header.extend(b"RIFF")  # ChunkID
-        header.extend((data_size + 36).to_bytes(4, "little"))  # ChunkSize: total size - 8
+        header.extend(
+            (data_size + 36).to_bytes(4, "little")
+        )  # ChunkSize: total size - 8
         header.extend(b"WAVE")  # Format
         # "fmt " sub-chunk
         header.extend(b"fmt ")  # Subchunk1ID
