@@ -25,7 +25,7 @@ from nanocat.services.openai.llm import (
 from nanocat.services.deepgram.stt import DeepgramSTTService
 from nanocat.services.azure.tts import AzureTTSService
 
-USE_DEEPGRAM = True
+USE_DEEPGRAM = False
 
 load_dotenv(override=True)
 
