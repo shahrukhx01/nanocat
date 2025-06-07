@@ -25,7 +25,7 @@ from nanocat.services.openai.llm import (
 from nanocat.services.deepgram.stt import DeepgramSTTService
 from nanocat.services.azure.tts import AzureTTSService
 
-USE_DEEPGRAM = True
+USE_DEEPGRAM = bool(os.getenv("USE_DEEPGRAM", "true"))
 
 load_dotenv(override=True)
 
@@ -56,10 +56,12 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     first_message = "Hello, how are you?"
 
     if USE_DEEPGRAM:
+        logger.info("Using Deepgram STT")
         stt_service = DeepgramSTTService(
             api_key=os.getenv("DEEPGRAM_API_KEY"),
         )
     else:
+        logger.info("Using OpenAI STT")
         stt_service = OpenAISTTService(
             api_key=os.getenv("OPENAI_API_KEY"),
         )
