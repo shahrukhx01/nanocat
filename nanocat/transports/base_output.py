@@ -76,9 +76,6 @@ class BaseOutputTransport(FrameProcessor):
         for destination in self._params.audio_out_destinations:
             await self.register_audio_destination(destination)
 
-        for destination in self._params.video_out_destinations:
-            await self.register_video_destination(destination)
-
         # Start default media sender.
         self._media_senders[None] = BaseOutputTransport.MediaSender(
             self,
@@ -89,10 +86,10 @@ class BaseOutputTransport(FrameProcessor):
         )
         await self._media_senders[None].start(frame)
 
-        # Media senders already send both audio and video, so make sure we only
+        # Media senders already send both audio, so make sure we only
         # have one media server per shared name.
         destinations = list(
-            set(self._params.audio_out_destinations + self._params.video_out_destinations)
+            set(self._params.audio_out_destinations)
         )
 
         # Start media senders.
@@ -115,9 +112,6 @@ class BaseOutputTransport(FrameProcessor):
             await sender.cancel(frame)
 
     async def send_message(self, frame: TransportMessageFrame | TransportMessageUrgentFrame):
-        pass
-
-    async def register_video_destination(self, destination: str):
         pass
 
     async def register_audio_destination(self, destination: str):
@@ -216,14 +210,10 @@ class BaseOutputTransport(FrameProcessor):
             # This will be used to resample incoming audio to the output sample rate.
             self._resampler = create_default_resampler()
 
-            # These are the images that we should send at our desired framerate.
-            self._video_images = None
-
             # Indicates if the bot is currently speaking.
             self._bot_speaking = False
 
             self._audio_task: Optional[asyncio.Task] = None
-            self._video_task: Optional[asyncio.Task] = None
             self._clock_task: Optional[asyncio.Task] = None
 
         @property
@@ -238,7 +228,6 @@ class BaseOutputTransport(FrameProcessor):
             self._audio_buffer = bytearray()
 
             # Create all tasks.
-            self._create_video_task()
             self._create_clock_task()
             self._create_audio_task()
 
@@ -249,21 +238,15 @@ class BaseOutputTransport(FrameProcessor):
 
             # At this point we have enqueued an EndFrame and we need to wait for
             # that EndFrame to be processed by the audio and clock tasks. We
-            # also need to wait for these tasks before cancelling the video task
-            # because it might be still rendering.
             if self._audio_task:
                 await self._transport.wait_for_task(self._audio_task)
             if self._clock_task:
                 await self._transport.wait_for_task(self._clock_task)
 
-            # We can now cancel the video task.
-            await self._cancel_video_task()
-
         async def cancel(self, frame: CancelFrame):
             # Since we are cancelling everything it doesn't matter what task we cancel first.
             await self._cancel_audio_task()
             await self._cancel_clock_task()
-            await self._cancel_video_task()
 
         async def handle_interruptions(self, _: StartInterruptionFrame):
             if not self._transport.interruptions_allowed:
@@ -272,9 +255,7 @@ class BaseOutputTransport(FrameProcessor):
             # Cancel tasks.
             await self._cancel_audio_task()
             await self._cancel_clock_task()
-            await self._cancel_video_task()
             # Create tasks.
-            self._create_video_task()
             self._create_clock_task()
             self._create_audio_task()
             # Let's send a bot stopped speaking if we have to.
@@ -406,61 +387,6 @@ class BaseOutputTransport(FrameProcessor):
                 # Send audio.
                 if isinstance(frame, OutputAudioRawFrame):
                     await self._transport.write_raw_audio_frames(frame.audio, self._destination)
-
-        #
-        # Video handling
-        #
-
-        def _create_video_task(self):
-            if not self._video_task and self._params.video_out_enabled:
-                self._video_queue = asyncio.Queue()
-                self._video_task = self._transport.create_task(self._video_task_handler())
-
-        async def _cancel_video_task(self):
-            # Stop video output task.
-            if self._video_task:
-                await self._transport.cancel_task(self._video_task)
-                self._video_task = None
-
-        async def _video_task_handler(self):
-            self._video_start_time = None
-            self._video_frame_index = 0
-            self._video_frame_duration = 1 / self._params.video_out_framerate
-            self._video_frame_reset = self._video_frame_duration * 5
-            while True:
-                if self._params.video_out_is_live:
-                    await self._video_is_live_handler()
-                elif self._video_images:
-                    image = next(self._video_images)
-                    await self._draw_image(image)
-                    await asyncio.sleep(self._video_frame_duration)
-                else:
-                    await asyncio.sleep(self._video_frame_duration)
-
-        async def _video_is_live_handler(self):
-            image = await self._video_queue.get()
-
-            # We get the start time as soon as we get the first image.
-            if not self._video_start_time:
-                self._video_start_time = time.time()
-                self._video_frame_index = 0
-
-            # Calculate how much time we need to wait before rendering next image.
-            real_elapsed_time = time.time() - self._video_start_time
-            real_render_time = self._video_frame_index * self._video_frame_duration
-            delay_time = self._video_frame_duration + real_render_time - real_elapsed_time
-
-            if abs(delay_time) > self._video_frame_reset:
-                self._video_start_time = time.time()
-                self._video_frame_index = 0
-            elif delay_time > 0:
-                await asyncio.sleep(delay_time)
-                self._video_frame_index += 1
-
-            # Render image
-            await self._draw_image(image)
-
-            self._video_queue.task_done()
 
         #
         # Clock handling
