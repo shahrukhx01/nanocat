@@ -7,12 +7,13 @@
 from typing import Callable, Coroutine, List
 
 from nanocat.frames.frames import Frame
-from nanocat.pipeline.base_pipeline import BasePipeline
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 
 
 class PipelineSource(FrameProcessor):
-    def __init__(self, upstream_push_frame: Callable[[Frame, FrameDirection], Coroutine]):
+    def __init__(
+        self, upstream_push_frame: Callable[[Frame, FrameDirection], Coroutine]
+    ):
         super().__init__()
         self._upstream_push_frame = upstream_push_frame
 
@@ -27,7 +28,9 @@ class PipelineSource(FrameProcessor):
 
 
 class PipelineSink(FrameProcessor):
-    def __init__(self, downstream_push_frame: Callable[[Frame, FrameDirection], Coroutine]):
+    def __init__(
+        self, downstream_push_frame: Callable[[Frame, FrameDirection], Coroutine]
+    ):
         super().__init__()
         self._downstream_push_frame = downstream_push_frame
 
@@ -41,7 +44,7 @@ class PipelineSink(FrameProcessor):
                 await self._downstream_push_frame(frame, direction)
 
 
-class Pipeline(BasePipeline):
+class Pipeline(FrameProcessor):
     def __init__(self, processors: List[FrameProcessor]):
         super().__init__()
 
@@ -49,10 +52,11 @@ class Pipeline(BasePipeline):
         # downstream outside of the pipeline.
         self._source = PipelineSource(self.push_frame)
         self._sink = PipelineSink(self.push_frame)
-        self._processors: List[FrameProcessor] = [self._source] + processors + [self._sink]
+        self._processors: List[FrameProcessor] = (
+            [self._source] + processors + [self._sink]
+        )
 
         self._link_processors()
-
 
     #
     # Frame processor
