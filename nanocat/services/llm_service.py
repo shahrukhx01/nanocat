@@ -16,13 +16,10 @@ from typing import (
     Protocol,
     Set,
     Tuple,
-    Type,
 )
 
 from loguru import logger
 
-from nanocat.adapters.base_llm_adapter import BaseLLMAdapter
-from nanocat.adapters.services.open_ai_adapter import OpenAILLMAdapter
 from nanocat.frames.frames import (
     Frame,
     FunctionCallCancelFrame,
@@ -92,21 +89,13 @@ class FunctionCallParams:
 class LLMService(AIService):
     """This class is a no-op but serves as a base class for LLM services."""
 
-    # OpenAILLMAdapter is used as the default adapter since it aligns with most LLM implementations.
-    # However, subclasses should override this with a more specific adapter when necessary.
-    adapter_class: Type[BaseLLMAdapter] = OpenAILLMAdapter
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._functions = {}
         self._start_callbacks = {}
-        self._adapter = self.adapter_class()
         self._function_call_tasks: Set[Tuple[asyncio.Task, str, str]] = set()
 
         self._register_event_handler("on_completion_timeout")
-
-    def get_llm_adapter(self) -> BaseLLMAdapter:
-        return self._adapter
 
     def create_context_aggregator(
         self,

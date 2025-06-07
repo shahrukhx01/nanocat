@@ -67,7 +67,6 @@ class OpenAILLMService(BaseOpenAILLMService):
             OpenAIContextAggregatorPair.
 
         """
-        context.set_llm_adapter(self.get_llm_adapter())
         user = OpenAIUserContextAggregator(context, params=user_params)
         assistant = OpenAIAssistantContextAggregator(context, params=assistant_params)
         return OpenAIContextAggregatorPair(_user=user, _assistant=assistant)
