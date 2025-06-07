@@ -16,7 +16,7 @@ from nanocat.serializers.protobuf import ProtobufFrameSerializer
 from nanocat.audio.vad.silero import SileroVADAnalyzer
 from nanocat.pipeline.pipeline import Pipeline
 from nanocat.pipeline.task import PipelineTask, PipelineParams
-from nanocat.services.deepgram.stt import DeepgramSTTService
+from nanocat.services.openai.stt import OpenAISTTService
 from nanocat.services.openai.llm import (
     OpenAIContextAggregatorPair,
     OpenAILLMService,
@@ -53,8 +53,8 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     )
     first_message = "Hello, how are you?"
 
-    stt_service = DeepgramSTTService(
-        api_key=os.getenv("DEEPGRAM_API_KEY"),
+    stt_service = OpenAISTTService(
+        api_key=os.getenv("OPENAI_API_KEY"),
     )
 
     llm_service = OpenAILLMService(
