@@ -53,18 +53,6 @@ class Pipeline(BasePipeline):
 
         self._link_processors()
 
-    #
-    # BasePipeline
-    #
-
-    def processors_with_metrics(self):
-        services = []
-        for p in self._processors:
-            if isinstance(p, BasePipeline):
-                services.extend(p.processors_with_metrics())
-            elif p.can_generate_metrics():
-                services.append(p)
-        return services
 
     #
     # Frame processor

@@ -90,9 +90,6 @@ class AzureBaseTTSService(TTSService):
         self._voice_id = voice
         self._speech_synthesizer = None
 
-    def can_generate_metrics(self) -> bool:
-        return True
-
     def language_to_service_language(self, language: Language) -> Optional[str]:
         return language_to_azure_language(language)
 
@@ -207,12 +204,10 @@ class AzureTTSService(AzureBaseTTSService):
                 return
 
             try:
-                await self.start_ttfb_metrics()
                 yield TTSStartedFrame()
 
                 ssml = self._construct_ssml(text)
                 self._speech_synthesizer.speak_ssml_async(ssml)
-                await self.start_tts_usage_metrics(text)
 
                 # Stream audio chunks as they arrive
                 while True:
@@ -220,7 +215,6 @@ class AzureTTSService(AzureBaseTTSService):
                     if chunk is None:  # End of stream
                         break
 
-                    await self.stop_ttfb_metrics()
                     yield TTSAudioRawFrame(
                         audio=chunk,
                         sample_rate=self.sample_rate,
@@ -266,15 +260,11 @@ class AzureHttpTTSService(AzureBaseTTSService):
     async def run_tts(self, text: str) -> AsyncGenerator[Frame, None]:
         logger.debug(f"{self}: Generating TTS [{text}]")
 
-        await self.start_ttfb_metrics()
-
         ssml = self._construct_ssml(text)
 
         result = await asyncio.to_thread(self._speech_synthesizer.speak_ssml, ssml)
 
         if result.reason == ResultReason.SynthesizingAudioCompleted:
-            await self.start_tts_usage_metrics(text)
-            await self.stop_ttfb_metrics()
             yield TTSStartedFrame()
             # Azure always sends a 44-byte header. Strip it off.
             yield TTSAudioRawFrame(

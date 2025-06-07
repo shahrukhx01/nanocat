@@ -96,7 +96,7 @@ class BaseWhisperSTTService(SegmentedSTTService):
     """Base class for Whisper-based speech-to-text services.
 
     Provides common functionality for services implementing the Whisper API interface,
-    including metrics generation and error handling.
+    including error handling.
 
     Args:
         model: Name of the Whisper model to use.
@@ -132,9 +132,6 @@ class BaseWhisperSTTService(SegmentedSTTService):
     async def set_model(self, model: str):
         self.set_model_name(model)
 
-    def can_generate_metrics(self) -> bool:
-        return True
-
     def language_to_service_language(self, language: Language) -> Optional[str]:
         return language_to_whisper_language(language)
 
@@ -149,13 +146,7 @@ class BaseWhisperSTTService(SegmentedSTTService):
 
     async def run_stt(self, audio: bytes) -> AsyncGenerator[Frame, None]:
         try:
-            await self.start_processing_metrics()
-            await self.start_ttfb_metrics()
-
             response = await self._transcribe(audio)
-
-            await self.stop_ttfb_metrics()
-            await self.stop_processing_metrics()
 
             text = response.text.strip()
 

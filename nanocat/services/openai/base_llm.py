@@ -27,7 +27,6 @@ from nanocat.frames.frames import (
     LLMTextFrame,
     LLMUpdateSettingsFrame,
 )
-from nanocat.metrics.metrics import LLMTokenUsage
 from nanocat.processors.aggregators.openai_llm_context import (
     OpenAILLMContext,
     OpenAILLMContextFrame,
@@ -122,9 +121,6 @@ class BaseOpenAILLMService(LLMService):
             default_headers=default_headers,
         )
 
-    def can_generate_metrics(self) -> bool:
-        return True
-
     async def get_chat_completions(
         self, context: OpenAILLMContext, messages: List[ChatCompletionMessageParam]
     ) -> AsyncStream[ChatCompletionChunk]:
@@ -184,25 +180,14 @@ class BaseOpenAILLMService(LLMService):
         arguments = ""
         tool_call_id = ""
 
-        await self.start_ttfb_metrics()
-
         chunk_stream: AsyncStream[ChatCompletionChunk] = await self._stream_chat_completions(
             context
         )
 
         async for chunk in chunk_stream:
-            if chunk.usage:
-                tokens = LLMTokenUsage(
-                    prompt_tokens=chunk.usage.prompt_tokens,
-                    completion_tokens=chunk.usage.completion_tokens,
-                    total_tokens=chunk.usage.total_tokens,
-                )
-                await self.start_llm_usage_metrics(tokens)
 
             if chunk.choices is None or len(chunk.choices) == 0:
                 continue
-
-            await self.stop_ttfb_metrics()
 
             if not chunk.choices[0].delta:
                 continue
@@ -281,10 +266,8 @@ class BaseOpenAILLMService(LLMService):
         if context:
             try:
                 await self.push_frame(LLMFullResponseStartFrame())
-                await self.start_processing_metrics()
                 await self._process_context(context)
             except httpx.TimeoutException:
                 await self._call_event_handler("on_completion_timeout")
             finally:
-                await self.stop_processing_metrics()
                 await self.push_frame(LLMFullResponseEndFrame())
