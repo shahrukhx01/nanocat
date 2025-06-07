@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD 2-Clause License
 #
 
-import os
 import time
 from typing import Optional
 
@@ -117,8 +116,7 @@ class SileroVADAnalyzer(VADAnalyzer):
         super().__init__(sample_rate=sample_rate, params=params)
 
         logger.debug("Loading Silero VAD model...")
-        model_file_path = os.getenv("SILERO_VAD_FILE_PATH")
-        self._model = SileroOnnxModel(model_file_path, force_onnx_cpu=True)
+        self._model = SileroOnnxModel("silero_vad.onnx", force_onnx_cpu=True)
 
         self._last_reset_time = 0
 
