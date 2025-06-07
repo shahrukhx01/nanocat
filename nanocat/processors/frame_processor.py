@@ -20,8 +20,6 @@ from nanocat.frames.frames import (
     StopInterruptionFrame,
     SystemFrame,
 )
-from nanocat.metrics.metrics import LLMTokenUsage, MetricsData
-from nanocat.metrics.frame_processor_metrics import FrameProcessorMetrics
 from nanocat.utils.asyncio import BaseTaskManager
 from nanocat.utils.base_object import BaseObject
 
@@ -36,7 +34,6 @@ class FrameProcessor(BaseObject):
         self,
         *,
         name: Optional[str] = None,
-        metrics: Optional[FrameProcessorMetrics] = None,
         **kwargs,
     ):
         super().__init__(name=name)
@@ -62,10 +59,6 @@ class FrameProcessor(BaseObject):
         # (e.g. EndFrame). So, when we are cancelling we don't want anything
         # else to be pushed.
         self._cancelling = False
-
-        # Metrics
-        self._metrics = metrics or FrameProcessorMetrics()
-        self._metrics.set_processor_name(self.name)
 
         # Processors have an input queue. The input queue will be processed
         # immediately (default) or it will block if `pause_processing_frames()`
@@ -107,9 +100,6 @@ class FrameProcessor(BaseObject):
     def can_generate_metrics(self) -> bool:
         return False
 
-    def set_core_metrics_data(self, data: MetricsData):
-        self._metrics.set_core_metrics_data(data)
-
     async def start_ttfb_metrics(self):
         if self.can_generate_metrics() and self.metrics_enabled:
             await self._metrics.start_ttfb_metrics(self._report_only_initial_ttfb)
@@ -127,12 +117,6 @@ class FrameProcessor(BaseObject):
     async def stop_processing_metrics(self):
         if self.can_generate_metrics() and self.metrics_enabled:
             frame = await self._metrics.stop_processing_metrics()
-            if frame:
-                await self.push_frame(frame)
-
-    async def start_llm_usage_metrics(self, tokens: LLMTokenUsage):
-        if self.can_generate_metrics() and self.usage_metrics_enabled:
-            frame = await self._metrics.start_llm_usage_metrics(tokens)
             if frame:
                 await self.push_frame(frame)
 

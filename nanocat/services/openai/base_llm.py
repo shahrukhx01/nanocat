@@ -27,7 +27,6 @@ from nanocat.frames.frames import (
     LLMTextFrame,
     LLMUpdateSettingsFrame,
 )
-from nanocat.metrics.metrics import LLMTokenUsage
 from nanocat.processors.aggregators.openai_llm_context import (
     OpenAILLMContext,
     OpenAILLMContextFrame,
@@ -191,13 +190,6 @@ class BaseOpenAILLMService(LLMService):
         )
 
         async for chunk in chunk_stream:
-            if chunk.usage:
-                tokens = LLMTokenUsage(
-                    prompt_tokens=chunk.usage.prompt_tokens,
-                    completion_tokens=chunk.usage.completion_tokens,
-                    total_tokens=chunk.usage.total_tokens,
-                )
-                await self.start_llm_usage_metrics(tokens)
 
             if chunk.choices is None or len(chunk.choices) == 0:
                 continue

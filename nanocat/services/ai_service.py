@@ -15,7 +15,6 @@ from nanocat.frames.frames import (
     Frame,
     StartFrame,
 )
-from nanocat.metrics.metrics import MetricsData
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 
 
@@ -32,7 +31,6 @@ class AIService(FrameProcessor):
 
     def set_model_name(self, model: str):
         self._model_name = model
-        self.set_core_metrics_data(MetricsData(processor=self.name, model=self._model_name))
 
     async def start(self, frame: StartFrame):
         pass

@@ -16,22 +16,6 @@ class ProcessingMetricsData(MetricsData):
     value: float
 
 
-class LLMTokenUsage(BaseModel):
-    prompt_tokens: int
-    completion_tokens: int
-    total_tokens: int
-    cache_read_input_tokens: Optional[int] = None
-    cache_creation_input_tokens: Optional[int] = None
-
-
-class LLMUsageMetricsData(MetricsData):
-    value: LLMTokenUsage
-
-
-class TTSUsageMetricsData(MetricsData):
-    value: int
-
-
 class SmartTurnMetricsData(MetricsData):
     """Metrics data for smart turn predictions."""
 
