@@ -25,12 +25,12 @@ from nanocat.services.openai.llm import (
 from nanocat.services.deepgram.stt import DeepgramSTTService
 from nanocat.services.azure.tts import AzureTTSService
 
-USE_DEEPGRAM = bool(os.getenv("USE_DEEPGRAM", "true"))
-
 load_dotenv(override=True)
 
 logger.remove(0)
 logger.add(sys.stderr, level="DEBUG")
+
+USE_DEEPGRAM = int(os.getenv("USE_DEEPGRAM", '0'))
 
 
 app = FastAPI()
