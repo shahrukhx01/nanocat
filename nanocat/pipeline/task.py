@@ -27,8 +27,8 @@ from nanocat.frames.frames import (
     StopFrame,
     StopTaskFrame,
 )
-from nanocat.pipeline.base_pipeline import BasePipeline
 from nanocat.pipeline.base_task import BaseTask
+from nanocat.pipeline.pipeline import Pipeline
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 from nanocat.utils.asyncio import BaseTaskManager, TaskManager
 
@@ -147,7 +147,7 @@ class PipelineTask(BaseTask):
 
     def __init__(
         self,
-        pipeline: BasePipeline,
+        pipeline: Pipeline,
         *,
         params: PipelineParams = PipelineParams(),
         clock: BaseClock = SystemClock(),
