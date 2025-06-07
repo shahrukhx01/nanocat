@@ -21,7 +21,6 @@ from nanocat.transcriptions.language import Language
 from nanocat.utils.asyncio import BaseTaskManager
 from nanocat.utils.utils import obj_count, obj_id
 from nanocat.clocks.base_clock import BaseClock
-from nanocat.metrics.metrics import MetricsData
 from nanocat.utils.time.time_utils import nanoseconds_to_str
 
 
@@ -341,9 +340,6 @@ class StartFrame(SystemFrame):
     audio_in_sample_rate: int = 16000
     audio_out_sample_rate: int = 24000
     allow_interruptions: bool = False
-    enable_metrics: bool = False
-    enable_usage_metrics: bool = False
-    report_only_initial_ttfb: bool = False
 
 
 @dataclass
@@ -530,13 +526,6 @@ class BotSpeakingFrame(SystemFrame):
     """
 
     pass
-
-
-@dataclass
-class MetricsFrame(SystemFrame):
-    """Emitted by processor that can compute metrics like latencies."""
-
-    data: List[MetricsData]
 
 
 @dataclass

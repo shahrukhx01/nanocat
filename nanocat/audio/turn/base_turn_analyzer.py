@@ -6,9 +6,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Tuple
-
-from nanocat.metrics.metrics import MetricsData
+from typing import Any, Optional, Tuple
 
 
 class EndOfTurnState(Enum):
@@ -71,7 +69,7 @@ class BaseTurnAnalyzer(ABC):
         pass
 
     @abstractmethod
-    async def analyze_end_of_turn(self) -> Tuple[EndOfTurnState, Optional[MetricsData]]:
+    async def analyze_end_of_turn(self) -> Tuple[EndOfTurnState, Optional[Any]]:
         """Analyzes if an end of turn has occurred based on the audio input.
 
         Returns:

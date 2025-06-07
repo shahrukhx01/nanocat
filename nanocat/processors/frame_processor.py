@@ -49,9 +49,6 @@ class FrameProcessor(BaseObject):
 
         # Other properties
         self._allow_interruptions = False
-        self._enable_metrics = False
-        self._enable_usage_metrics = False
-        self._report_only_initial_ttfb = False
 
         # Cancellation is done through CancelFrame (a system frame). This could
         # cause other events being triggered (e.g. closing a transport) which
@@ -84,51 +81,6 @@ class FrameProcessor(BaseObject):
     @property
     def interruptions_allowed(self):
         return self._allow_interruptions
-
-    @property
-    def metrics_enabled(self):
-        return self._enable_metrics
-
-    @property
-    def usage_metrics_enabled(self):
-        return self._enable_usage_metrics
-
-    @property
-    def report_only_initial_ttfb(self):
-        return self._report_only_initial_ttfb
-
-    def can_generate_metrics(self) -> bool:
-        return False
-
-    async def start_ttfb_metrics(self):
-        if self.can_generate_metrics() and self.metrics_enabled:
-            await self._metrics.start_ttfb_metrics(self._report_only_initial_ttfb)
-
-    async def stop_ttfb_metrics(self):
-        if self.can_generate_metrics() and self.metrics_enabled:
-            frame = await self._metrics.stop_ttfb_metrics()
-            if frame:
-                await self.push_frame(frame)
-
-    async def start_processing_metrics(self):
-        if self.can_generate_metrics() and self.metrics_enabled:
-            await self._metrics.start_processing_metrics()
-
-    async def stop_processing_metrics(self):
-        if self.can_generate_metrics() and self.metrics_enabled:
-            frame = await self._metrics.stop_processing_metrics()
-            if frame:
-                await self.push_frame(frame)
-
-    async def start_tts_usage_metrics(self, text: str):
-        if self.can_generate_metrics() and self.usage_metrics_enabled:
-            frame = await self._metrics.start_tts_usage_metrics(text)
-            if frame:
-                await self.push_frame(frame)
-
-    async def stop_all_metrics(self):
-        await self.stop_ttfb_metrics()
-        await self.stop_processing_metrics()
 
     def create_task(self, coroutine: Coroutine, name: Optional[str] = None) -> asyncio.Task:
         if not self._task_manager:
@@ -212,15 +164,11 @@ class FrameProcessor(BaseObject):
             self._clock = frame.clock
             self._task_manager = frame.task_manager
             self._allow_interruptions = frame.allow_interruptions
-            self._enable_metrics = frame.enable_metrics
-            self._enable_usage_metrics = frame.enable_usage_metrics
-            self._report_only_initial_ttfb = frame.report_only_initial_ttfb
             await self.__start(frame)
         elif isinstance(frame, StartInterruptionFrame):
             await self._start_interruption()
-            await self.stop_all_metrics()
         elif isinstance(frame, StopInterruptionFrame):
-            self._should_report_ttfb = True
+            pass
         elif isinstance(frame, CancelFrame):
             await self.__cancel(frame)
 

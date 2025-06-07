@@ -15,7 +15,6 @@ from nanocat.frames.frames import (
     InterimTranscriptionFrame,
     StartFrame,
     TranscriptionFrame,
-    UserStartedSpeakingFrame,
     UserStoppedSpeakingFrame,
 )
 from nanocat.processors.frame_processor import FrameDirection
@@ -106,9 +105,6 @@ class DeepgramSTTService(STTService):
     def vad_enabled(self):
         return self._settings["vad_events"]
 
-    def can_generate_metrics(self) -> bool:
-        return True
-
     async def set_model(self, model: str):
         await super().set_model(model)
         logger.info(f"Switching STT model to: [{model}]")
@@ -167,21 +163,15 @@ class DeepgramSTTService(STTService):
             logger.debug("Disconnecting from Deepgram")
             await self._connection.finish()
 
-    async def start_metrics(self):
-        await self.start_ttfb_metrics()
-        await self.start_processing_metrics()
-
     async def _on_error(self, *args, **kwargs):
         error: ErrorResponse = kwargs["error"]
         logger.warning(f"{self} connection error, will retry: {error}")
-        await self.stop_all_metrics()
         # NOTE(aleix): we don't disconnect (i.e. call finish on the connection)
         # because this triggers more errors internally in the Deepgram SDK. So,
         # we just forget about the previous connection and create a new one.
         await self._connect()
 
     async def _on_speech_started(self, *args, **kwargs):
-        await self.start_metrics()
         await self._call_event_handler("on_speech_started", *args, **kwargs)
 
     async def _on_utterance_end(self, *args, **kwargs):
@@ -198,12 +188,10 @@ class DeepgramSTTService(STTService):
             language = result.channel.alternatives[0].languages[0]
             language = Language(language)
         if len(transcript) > 0:
-            await self.stop_ttfb_metrics()
             if is_final:
                 await self.push_frame(
                     TranscriptionFrame(transcript, "", time_now_iso8601(), language)
                 )
-                await self.stop_processing_metrics()
             else:
                 await self.push_frame(
                     InterimTranscriptionFrame(transcript, "", time_now_iso8601(), language)
@@ -212,10 +200,7 @@ class DeepgramSTTService(STTService):
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
 
-        if isinstance(frame, UserStartedSpeakingFrame) and not self.vad_enabled:
-            # Start metrics if Deepgram VAD is disabled & pipeline VAD has detected speech
-            await self.start_metrics()
-        elif isinstance(frame, UserStoppedSpeakingFrame):
+        if isinstance(frame, UserStoppedSpeakingFrame):
             # https://developers.deepgram.com/docs/finalize
             await self._connection.finalize()
             logger.trace(f"Triggered finalize event on: {frame.name=}, {direction=}")

@@ -23,7 +23,6 @@ from nanocat.frames.frames import (
     EndFrame,
     Frame,
     InputAudioRawFrame,
-    MetricsFrame,
     StartFrame,
     StartInterruptionFrame,
     StopInterruptionFrame,
@@ -34,7 +33,6 @@ from nanocat.frames.frames import (
     VADUserStartedSpeakingFrame,
     VADUserStoppedSpeakingFrame,
 )
-from nanocat.metrics.metrics import MetricsData
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
 from nanocat.transports.base_transport import TransportParams
 
@@ -258,8 +256,7 @@ class BaseInputTransport(FrameProcessor):
 
     async def _handle_end_of_turn(self):
         if self.turn_analyzer:
-            state, prediction = await self.turn_analyzer.analyze_end_of_turn()
-            await self._handle_prediction_result(prediction)
+            state, _ = await self.turn_analyzer.analyze_end_of_turn()
             await self._handle_end_of_turn_complete(state)
 
     async def _handle_end_of_turn_complete(self, state: EndOfTurnState):
@@ -297,11 +294,3 @@ class BaseInputTransport(FrameProcessor):
                 await self.push_frame(frame)
 
             self._audio_in_queue.task_done()
-
-    async def _handle_prediction_result(self, result: MetricsData):
-        """Handle a prediction result event from the turn analyzer.
-
-        Args:
-            result: The prediction result MetricsData.
-        """
-        await self.push_frame(MetricsFrame(data=[result]))

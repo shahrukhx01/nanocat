@@ -270,8 +270,6 @@ class TTSService(AIService):
         # or when we received an LLMFullResponseEndFrame
         self._processing_text = True
 
-        await self.start_processing_metrics()
-
         # Process all filter.
         for filter in self._text_filters:
             filter.reset_interruption()
@@ -279,8 +277,6 @@ class TTSService(AIService):
 
         if text:
             await self.process_generator(self.run_tts(text))
-
-        await self.stop_processing_metrics()
 
         if self._push_text_frames:
             # We send the original text after the audio. This way, if we are

@@ -23,12 +23,10 @@ from nanocat.frames.frames import (
     Frame,
     HeartbeatFrame,
     LLMFullResponseEndFrame,
-    MetricsFrame,
     StartFrame,
     StopFrame,
     StopTaskFrame,
 )
-from nanocat.metrics.metrics import ProcessingMetricsData, TTFBMetricsData
 from nanocat.pipeline.base_pipeline import BasePipeline
 from nanocat.pipeline.base_task import BaseTask
 from nanocat.processors.frame_processor import FrameDirection, FrameProcessor
@@ -46,11 +44,7 @@ class PipelineParams(BaseModel):
         audio_in_sample_rate: Input audio sample rate in Hz.
         audio_out_sample_rate: Output audio sample rate in Hz.
         enable_heartbeats: Whether to enable heartbeat monitoring.
-        enable_metrics: Whether to enable metrics collection.
-        enable_usage_metrics: Whether to enable usage metrics.
         heartbeats_period_secs: Period between heartbeats in seconds.
-        report_only_initial_ttfb: Whether to report only initial time to first byte.
-        send_initial_empty_metrics: Whether to send initial empty metrics.
         start_metadata: Additional metadata for pipeline start.
     """
 
@@ -60,11 +54,7 @@ class PipelineParams(BaseModel):
     audio_in_sample_rate: int = 16000
     audio_out_sample_rate: int = 24000
     enable_heartbeats: bool = False
-    enable_metrics: bool = False
-    enable_usage_metrics: bool = False
     heartbeats_period_secs: float = HEARTBEAT_SECONDS
-    report_only_initial_ttfb: bool = False
-    send_initial_empty_metrics: bool = True
     start_metadata: Dict[str, Any] = {}
 
 
@@ -360,14 +350,6 @@ class PipelineTask(BaseTask):
         if self._idle_timeout_secs:
             await self._task_manager.cancel_task(self._idle_monitor_task)
 
-    def _initial_metrics_frame(self) -> MetricsFrame:
-        processors = self._pipeline.processors_with_metrics()
-        data = []
-        for p in processors:
-            data.append(TTFBMetricsData(processor=p.name, value=0.0))
-            data.append(ProcessingMetricsData(processor=p.name, value=0.0))
-        return MetricsFrame(data=data)
-
     async def _wait_for_pipeline_end(self):
         await self._pipeline_end_event.wait()
         self._pipeline_end_event.clear()
@@ -399,17 +381,9 @@ class PipelineTask(BaseTask):
             allow_interruptions=self._params.allow_interruptions,
             audio_in_sample_rate=self._params.audio_in_sample_rate,
             audio_out_sample_rate=self._params.audio_out_sample_rate,
-            enable_metrics=self._params.enable_metrics,
-            enable_usage_metrics=self._params.enable_usage_metrics,
-            report_only_initial_ttfb=self._params.report_only_initial_ttfb,
         )
         start_frame.metadata = self._params.start_metadata
         await self._source.queue_frame(start_frame, FrameDirection.DOWNSTREAM)
-
-        if self._params.enable_metrics and self._params.send_initial_empty_metrics:
-            await self._source.queue_frame(
-                self._initial_metrics_frame(), FrameDirection.DOWNSTREAM
-            )
 
         running = True
         cleanup_pipeline = True
